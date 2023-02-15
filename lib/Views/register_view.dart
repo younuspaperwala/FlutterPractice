@@ -32,63 +32,52 @@ class _RegisterViewState extends State<RegisterView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Register'),
+      appBar: AppBar(actions: [const Text("Register")]),
+      body: Column(
+        children: [
+          TextField(
+            //Textfield for email
+            controller: _email,
+            enableSuggestions: false,
+            autocorrect: false,
+            keyboardType: TextInputType.emailAddress,
+            decoration:
+                const InputDecoration(hintText: "Enter your Username or Email"),
+          ),
+          TextField(
+            //textfield for password
+            controller: _password,
+            obscureText: true,
+            enableSuggestions: false,
+            autocorrect: false,
+            decoration: const InputDecoration(hintText: "Enter your password"),
+          ),
+          TextButton(
+            onPressed: () async {
+              final email = _email.text;
+              final password = _password.text;
+              try {
+                final userCreds = await FirebaseAuth.instance
+                    .createUserWithEmailAndPassword(
+                        email: email, password: password);
+              } on FirebaseAuthException catch (e) {
+                if (e.code == "weak password") {
+                  print("Please use a strong password");
+                } else {
+                  print(e);
+                }
+              }
+            }, //button press is an async task
+            child: const Text("Register Here"),
+          ),
+          TextButton(
+              onPressed: () => {
+                    Navigator.of(context)
+                        .pushNamedAndRemoveUntil('/login/', (route) => false),
+                  },
+              child: const Text("Already Registered? Login Here!"))
+        ],
       ),
-      body: FutureBuilder(
-          future: Firebase.initializeApp(
-            options: DefaultFirebaseOptions.currentPlatform,
-          ),
-          builder: (context, snapshot) {
-            switch (snapshot.connectionState) {
-              case ConnectionState.done:
-                return Column(
-                  children: [
-                    TextField(
-                      //Textfield for email
-                      controller: _email,
-                      enableSuggestions: false,
-                      autocorrect: false,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                          hintText: "Enter your Username or Email"),
-                    ),
-                    TextField(
-                      //textfield for password
-                      controller: _password,
-                      obscureText: true,
-                      enableSuggestions: false,
-                      autocorrect: false,
-                      decoration: const InputDecoration(
-                          hintText: "Enter your password"),
-                    ),
-                    TextButton(
-                      onPressed: () async {
-                        final email = _email.text;
-                        final password = _password.text;
-                        try {
-                          final userCreds = await FirebaseAuth.instance
-                              .createUserWithEmailAndPassword(
-                                  email: email, password: password);
-                        } on FirebaseAuthException catch (e) {
-                          if (e.code == "weak password") {
-                            print("Please use a strong password");
-                          } else {
-                            print(e);
-                          }
-                        }
-                      }, //button press is an async task
-                      child: const Text("Register Here"),
-                    ),
-                  ],
-                );
-
-              default:
-                return const Text("Loading.....");
-            }
-          } //builder
-
-          ),
     );
   }
 }
