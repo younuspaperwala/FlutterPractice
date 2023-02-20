@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:remedypractice/constants/routes.dart';
+import 'package:remedypractice/utilities/errorDialog.dart';
 
 import '../firebase_options.dart';
 
@@ -32,7 +34,7 @@ class _RegisterViewState extends State<RegisterView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(actions: [const Text("Register")]),
+      appBar: AppBar(title: const Text("Register")),
       body: Column(
         children: [
           TextField(
@@ -42,7 +44,7 @@ class _RegisterViewState extends State<RegisterView> {
             autocorrect: false,
             keyboardType: TextInputType.emailAddress,
             decoration:
-                const InputDecoration(hintText: "Enter your Username or Email"),
+                const InputDecoration(hintText: "Enter your new Email address"),
           ),
           TextField(
             //textfield for password
@@ -50,7 +52,8 @@ class _RegisterViewState extends State<RegisterView> {
             obscureText: true,
             enableSuggestions: false,
             autocorrect: false,
-            decoration: const InputDecoration(hintText: "Enter your password"),
+            decoration:
+                const InputDecoration(hintText: "Enter your new password"),
           ),
           TextButton(
             onPressed: () async {
@@ -60,11 +63,20 @@ class _RegisterViewState extends State<RegisterView> {
                 final userCreds = await FirebaseAuth.instance
                     .createUserWithEmailAndPassword(
                         email: email, password: password);
+
+                await userCreds.user?.sendEmailVerification();
+                Navigator.of(context).pushNamed(verifyemailroute);
               } on FirebaseAuthException catch (e) {
                 if (e.code == "weak password") {
-                  print("Please use a strong password");
+                  showErrorDialog(
+                    context,
+                    "Please use a strong password",
+                  );
                 } else {
-                  print(e);
+                  showErrorDialog(
+                    context,
+                    e.code,
+                  );
                 }
               }
             }, //button press is an async task
@@ -73,7 +85,7 @@ class _RegisterViewState extends State<RegisterView> {
           TextButton(
               onPressed: () => {
                     Navigator.of(context)
-                        .pushNamedAndRemoveUntil('/login/', (route) => false),
+                        .pushNamedAndRemoveUntil(loginroute, (route) => false),
                   },
               child: const Text("Already Registered? Login Here!"))
         ],

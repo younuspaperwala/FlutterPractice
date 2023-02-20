@@ -3,6 +3,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:remedypractice/constants/routes.dart';
+import 'package:remedypractice/utilities/errorDialog.dart';
+import 'dart:developer' as devtools show log;
 
 import '../firebase_options.dart';
 
@@ -64,11 +67,34 @@ class _LoginViewState extends State<LoginView> {
                 final userCreds = await FirebaseAuth.instance
                     .signInWithEmailAndPassword(
                         email: email, password: password);
-                print(userCreds.user ?? "" + " is now logged in ");
+                devtools.log(userCreds.user?.email.toString() ??
+                    "" + " is now logged in ");
+                if (userCreds.user != null) {
+                  Navigator.of(context).pushNamedAndRemoveUntil(
+                    notesroute,
+                    (route) => false,
+                  );
+                }
               } on FirebaseAuthException catch (e) {
-                print(e.code);
+                if (e.code == "user-not-found") {
+                  showErrorDialog(
+                    context,
+                    "User Not Found",
+                  );
+                } else if (e.code == "wrong-password") {
+                  showErrorDialog(
+                    context,
+                    "Username or password is incorrect",
+                  );
+                } else {
+                  showErrorDialog(
+                    context,
+                    "Something went wrong please contact administrator",
+                  );
+                }
+                // devtools.log(e.code);
               } catch (e) {
-                print(e);
+                devtools.log(e.toString());
               }
             }, //button press is an async task
             child: const Text("Log in"),
@@ -76,7 +102,7 @@ class _LoginViewState extends State<LoginView> {
           TextButton(
               onPressed: () => {
                     Navigator.of(context).pushNamedAndRemoveUntil(
-                        '/register/', (route) => false),
+                        registerroute, (route) => false),
                   },
               child: const Text("Not Registered yet? Register Here!"))
         ],
