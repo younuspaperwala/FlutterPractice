@@ -1,13 +1,9 @@
-// ignore_for_file: avoid_print
-
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:remedypractice/constants/routes.dart';
+import 'package:remedypractice/services/auth/auth_exceptions.dart';
+import 'package:remedypractice/services/auth/auth_service.dart';
 import 'package:remedypractice/utilities/errorDialog.dart';
 import 'dart:developer' as devtools show log;
-
-import '../firebase_options.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({Key? key}) : super(key: key);
@@ -22,7 +18,6 @@ class _LoginViewState extends State<LoginView> {
 
   @override
   void initState() {
-    // TODO: implement initState
     _email = TextEditingController();
     _password = TextEditingController();
     super.initState();
@@ -30,7 +25,6 @@ class _LoginViewState extends State<LoginView> {
 
   @override
   void dispose() {
-    // TODO: implement dispose
     _email.dispose();
     _password.dispose();
     super.dispose();
@@ -64,35 +58,41 @@ class _LoginViewState extends State<LoginView> {
               final email = _email.text;
               final password = _password.text;
               try {
-                final userCreds = await FirebaseAuth.instance
-                    .signInWithEmailAndPassword(
-                        email: email, password: password);
-                devtools.log(userCreds.user?.email.toString() ??
-                    "" + " is now logged in ");
-                if (userCreds.user != null) {
-                  Navigator.of(context).pushNamedAndRemoveUntil(
-                    notesroute,
-                    (route) => false,
-                  );
+                final userCreds = await AuthService.firebase().logIn(
+                  email: email,
+                  password: password,
+                );
+
+                final user = AuthService.firebase().currentUser;
+
+                if (user != null) {
+                  if (user.isEmailVerified) {
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      notesroute,
+                      (route) => false,
+                    );
+                  } else {
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      verifyemailroute,
+                      (route) => false,
+                    );
+                  }
                 }
-              } on FirebaseAuthException catch (e) {
-                if (e.code == "user-not-found") {
-                  showErrorDialog(
-                    context,
-                    "User Not Found",
-                  );
-                } else if (e.code == "wrong-password") {
-                  showErrorDialog(
-                    context,
-                    "Username or password is incorrect",
-                  );
-                } else {
-                  showErrorDialog(
-                    context,
-                    "Something went wrong please contact administrator",
-                  );
-                }
-                // devtools.log(e.code);
+              } on UserNotFoundAuthException {
+                await showErrorDialog(
+                  context,
+                  "User Not Found",
+                );
+              } on WrongPasswordAuthException {
+                await showErrorDialog(
+                  context,
+                  "Username or password is incorrect",
+                );
+              } on GenericAuthException {
+                await showErrorDialog(
+                  context,
+                  "Something went wrong please contact administrator",
+                );
               } catch (e) {
                 devtools.log(e.toString());
               }

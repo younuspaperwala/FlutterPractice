@@ -1,10 +1,10 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:remedypractice/constants/routes.dart';
+import 'package:remedypractice/services/auth/auth_exceptions.dart';
+import 'package:remedypractice/services/auth/auth_service.dart';
 import 'package:remedypractice/utilities/errorDialog.dart';
 
-import '../firebase_options.dart';
+// import '../firebase_options.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
@@ -60,24 +60,33 @@ class _RegisterViewState extends State<RegisterView> {
               final email = _email.text;
               final password = _password.text;
               try {
-                final userCreds = await FirebaseAuth.instance
-                    .createUserWithEmailAndPassword(
-                        email: email, password: password);
+                final userCreds = await AuthService.firebase().createUser(
+                  email: email,
+                  password: password,
+                );
 
-                await userCreds.user?.sendEmailVerification();
+                AuthService.firebase().sendEmailVerification();
                 Navigator.of(context).pushNamed(verifyemailroute);
-              } on FirebaseAuthException catch (e) {
-                if (e.code == "weak password") {
-                  showErrorDialog(
-                    context,
-                    "Please use a strong password",
-                  );
-                } else {
-                  showErrorDialog(
-                    context,
-                    e.code,
-                  );
-                }
+              } on WeakPasswordAuthException {
+                await showErrorDialog(
+                  context,
+                  "Please use a strong password",
+                );
+              } on EmailAlreadyInUseAuthException {
+                await showErrorDialog(
+                  context,
+                  "Email already in use",
+                );
+              } on InvalidEmailAuthException {
+                await showErrorDialog(
+                  context,
+                  "Email is invalid",
+                );
+              } on GenericAuthException {
+                await showErrorDialog(
+                  context,
+                  "Something went wrong please contact administrator",
+                );
               }
             }, //button press is an async task
             child: const Text("Register Here"),

@@ -1,5 +1,6 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:remedypractice/constants/routes.dart';
+import 'package:remedypractice/services/auth/auth_service.dart';
 
 class VerfiyEmailView extends StatefulWidget {
   const VerfiyEmailView({super.key});
@@ -19,10 +20,16 @@ class _VerfiyEmailViewState extends State<VerfiyEmailView> {
                 "Your Email is not verified please check your email for verification."),
             TextButton(
                 onPressed: () async {
-                  final user = FirebaseAuth.instance.currentUser;
-                  await user?.sendEmailVerification();
+                  AuthService.firebase().sendEmailVerification();
                 },
-                child: const Text("Send email for verification"))
+                child: const Text("Send email for verification")),
+            TextButton(
+                onPressed: () async {
+                  AuthService.firebase().logOut();
+                  Navigator.of(context)
+                      .pushNamedAndRemoveUntil(loginroute, (route) => false);
+                },
+                child: const Text("Logout"))
           ],
         ));
   }
