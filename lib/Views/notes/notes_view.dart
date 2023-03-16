@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:remedypractice/enums/menus_action.dart';
 import 'package:remedypractice/services/auth/auth_service.dart';
+import 'package:remedypractice/services/crud/notes_services.dart';
 
-import '../constants/routes.dart';
+import '../../constants/routes.dart';
 
 class NotesViewState extends StatefulWidget {
   const NotesViewState({super.key});
@@ -12,12 +13,34 @@ class NotesViewState extends StatefulWidget {
 }
 
 class _NotesViewStateState extends State<NotesViewState> {
+  late final NotesService _notesService;
+  String get userEmail => AuthService.firebase().currentUser!.email!;
+
+  @override
+  void initState() {
+    _notesService = NotesService();
+    _notesService.open();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _notesService.close();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Notification"),
+        title: const Text("Your Notes"),
         actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.of(context).pushNamed(newNoteroute);
+            },
+            icon: const Icon(Icons.add),
+          ),
           PopupMenuButton<MenuAction>(onSelected: (value) async {
             switch (value) {
               case MenuAction.logout:
@@ -38,7 +61,31 @@ class _NotesViewStateState extends State<NotesViewState> {
           })
         ],
       ),
-      body: const Text("You're verified"),
+      body: FutureBuilder(
+        future: _notesService.getOrCreateUser(
+          email: userEmail,
+        ),
+        builder: (
+          context,
+          snapshot,
+        ) {
+          switch (snapshot.connectionState) {
+            case ConnectionState.done:
+              return StreamBuilder(
+                  stream: _notesService.allNotes,
+                  builder: (context, snapshot) {
+                    switch (snapshot.connectionState) {
+                      case ConnectionState.waiting:
+                        return const Text("Waiting for all notes...");
+                      default:
+                        return const CircularProgressIndicator();
+                    }
+                  });
+            default:
+              return const CircularProgressIndicator();
+          }
+        },
+      ),
     );
   }
 }

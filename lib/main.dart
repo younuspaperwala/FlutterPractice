@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:path/path.dart';
 import 'package:remedypractice/Views/Register_View.dart';
 import 'package:remedypractice/constants/routes.dart';
 import 'package:remedypractice/services/auth/auth_service.dart';
 import 'package:remedypractice/views/Login_View.dart';
 // import 'dart:developer' as devtools show log;
 
-import 'Views/notes_view.dart';
+import 'Views/notes/new_notes_view.dart';
+import 'Views/notes/notes_view.dart';
 import 'Views/verifyemail_view.dart';
 import 'firebase_options.dart';
 
@@ -22,6 +24,7 @@ void main() {
       registerroute: (context) => const RegisterView(),
       notesroute: (context) => const NotesViewState(),
       verifyemailroute: (context) => const VerfiyEmailView(),
+      newNoteroute: (context) => const NewNoteView(),
     },
   ));
 }

@@ -10,9 +10,19 @@ import 'crud_exceptions.dart';
 class NotesService {
   Database? _db;
   List<DatabaseNote> _notes = [];
+
+  //singleton
+  NotesService._sharedInstance(); // private contructore
+  static final NotesService _shared = NotesService
+      ._sharedInstance(); //private static variable with contructor value (object)
+  factory NotesService() =>
+      _shared; // factory method so now anyone calling NoteService will come here it will return static variable with one contructor
+  //singleton
+
   final _notesStreamController =
       StreamController<List<DatabaseNote>>.broadcast();
 
+  Stream<List<DatabaseNote>> get allNotes => _notesStreamController.stream;
   Future<DatabaseUser> getOrCreateUser({
     required String email,
   }) async {
@@ -34,6 +44,7 @@ class NotesService {
   }
 
   Future<List<DatabaseNote>> getAllNotes() async {
+    await ensureDbIsOpen();
     final db = _getDatabaseOrThrow();
     final notes = await db.query(noteTable);
 
@@ -44,6 +55,7 @@ class NotesService {
     required String text,
     required DatabaseNote note,
   }) async {
+    await ensureDbIsOpen();
     final db = _getDatabaseOrThrow();
 
     //make sure note exist
@@ -65,6 +77,7 @@ class NotesService {
   }
 
   Future<DatabaseNote> getNote({required int id}) async {
+    await ensureDbIsOpen();
     final db = _getDatabaseOrThrow();
     final notes = await db.query(
       noteTable,
@@ -85,6 +98,7 @@ class NotesService {
   }
 
   Future<int> deleteAllNotes() async {
+    await ensureDbIsOpen();
     final db = _getDatabaseOrThrow();
 
     final deletedCount = await db.delete(noteTable);
@@ -96,6 +110,7 @@ class NotesService {
   Future<void> deleteNote({
     required int id,
   }) async {
+    await ensureDbIsOpen();
     final db = _getDatabaseOrThrow();
     final deleteCount = await db.delete(
       noteTable,
@@ -112,6 +127,7 @@ class NotesService {
   }
 
   Future<DatabaseNote> createNote({required DatabaseUser owner}) async {
+    await ensureDbIsOpen();
     final db = _getDatabaseOrThrow();
 
     final dbUser = await getUser(email: owner.email);
@@ -143,6 +159,7 @@ class NotesService {
   }
 
   Future<DatabaseUser> getUser({required String email}) async {
+    await ensureDbIsOpen();
     final db = _getDatabaseOrThrow();
 
     final results = await db.query(
@@ -162,6 +179,7 @@ class NotesService {
   Future<DatabaseUser> createUser({
     required String email,
   }) async {
+    await ensureDbIsOpen();
     final db = _getDatabaseOrThrow();
 
     final results = await db.query(
@@ -188,6 +206,7 @@ class NotesService {
   Future<void> deleteUser({
     required String email,
   }) async {
+    await ensureDbIsOpen();
     final db = _getDatabaseOrThrow();
     final deleteCount = await db.delete(
       userTable,
@@ -207,6 +226,12 @@ class NotesService {
     } else {
       return db;
     }
+  }
+
+  Future<void> ensureDbIsOpen() async {
+    try {
+      await open();
+    } on DatabaseAlreadyOpenException {}
   }
 
   Future<void> close() async {
